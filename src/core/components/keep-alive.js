@@ -1,9 +1,14 @@
 /* @flow */
+// 使用flow做代码静态类型检查
+
+/**
+ * 问题：变化include属性，从['a','b']->['a']，源代码中会将b组件从cache中删除，为什么从a进入到b的时候不会回调b组件的mounted钩子
+ */
 
 /**
  * isRegExp判断是否是正则
  * remove方法删除数组中某一项
- * getFirstComponentChild 获取第一个组件
+ * getFirstComponentChild 获取第一个子组件
  */
 import { isRegExp, remove } from 'shared/util'
 import { getFirstComponentChild } from 'core/vdom/helpers/index'
@@ -36,13 +41,17 @@ function matches (pattern: string | RegExp | Array<string>, name: string): boole
 }
 
 /**
- * 
+ * @param {缓存组件挂载的对象} keepAliveInstance 
+ * @param {过滤函数} filter 不符合条件的从cache中删除掉
  */
 function pruneCache (keepAliveInstance: any, filter: Function) {
+  // 获取的缓存对象
   const { cache, keys, _vnode } = keepAliveInstance
+  // 遍历判断是否需要删除缓存对象
   for (const key in cache) {
     const cachedNode: ?VNode = cache[key]
     if (cachedNode) {
+      // 匹配缓存组件名是否不符合过滤函数，不符合就删除vnode缓存
       const name: ?string = getComponentName(cachedNode.componentOptions)
       if (name && !filter(name)) {
         pruneCacheEntry(cache, key, keys, _vnode)
@@ -78,6 +87,7 @@ const patternTypes: Array<Function> = [String, RegExp, Array]
 
 export default {
   name: 'keep-alive',
+  // 抽象组件，不会渲染出任何的dom元素
   abstract: true,
 
   props: {
@@ -100,9 +110,11 @@ export default {
   },
 
   mounted () {
+    // 监听include props
     this.$watch('include', val => {
       pruneCache(this, name => matches(val, name))
     })
+    // 监听exclude props
     this.$watch('exclude', val => {
       pruneCache(this, name => !matches(val, name))
     })
