@@ -1,5 +1,7 @@
 /* @flow */
 
+// vue全局的api
+
 import config from '../config'
 import { initUse } from './use'
 import { initMixin } from './mixin'
@@ -52,6 +54,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   }
 
   Vue.options = Object.create(null)
+   
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
   })

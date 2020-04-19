@@ -99,6 +99,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (vm._isBeingDestroyed) {
       return
     }
+    // 先父后子
     callHook(vm, 'beforeDestroy')
     vm._isBeingDestroyed = true
     // remove self from parent
@@ -122,6 +123,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // call the last hook...
     vm._isDestroyed = true
     // invoke destroy hooks on current rendered tree
+    // 递归销毁子组件 先子后父
     vm.__patch__(vm._vnode, null)
     // fire destroyed hook
     callHook(vm, 'destroyed')
@@ -144,7 +146,9 @@ export function mountComponent (
   hydrating?: boolean
 ): Component {
   vm.$el = el
+  // 判断是否有render并且也没有template转化为render函数
   if (!vm.$options.render) {
+    // template 需要用compiler版本  runtime版本
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -164,10 +168,12 @@ export function mountComponent (
       }
     }
   }
+  // mounted 生命周期
   callHook(vm, 'beforeMount')
 
   let updateComponent
   /* istanbul ignore if */
+  // vue性能埋点
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
       const name = vm._name
@@ -187,6 +193,7 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // hydrating 服务端渲染   vm._render()渲染vnode
       vm._update(vm._render(), hydrating)
     }
   }
@@ -194,6 +201,8 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // 观察者watch  渲染watcher  响应式原理强相关
+  // updateComponent --- 渲染组件的方法
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

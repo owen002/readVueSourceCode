@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== 'production') {
     'require' // for Webpack/Browserify
   )
 
+  // 报错，使用了没有定义的key
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }
 
+  // Proxy：对对象的访问做劫持
   const hasProxy =
     typeof Proxy !== 'undefined' && isNative(Proxy)
 

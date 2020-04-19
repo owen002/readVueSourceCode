@@ -35,6 +35,7 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
+// 将this.data.state代理到this对象上通过this.state来访问
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -45,11 +46,15 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+// 初始化state
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 初始化props
   if (opts.props) initProps(vm, opts.props)
+  // 初始化methods
   if (opts.methods) initMethods(vm, opts.methods)
+  // 初始化data
   if (opts.data) {
     initData(vm)
   } else {
@@ -109,8 +114,10 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+// 初始化data
 function initData (vm: Component) {
   let data = vm.$options.data
+  // 判断data是不是函数。 data属性区分对象还是函数
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -123,6 +130,7 @@ function initData (vm: Component) {
     )
   }
   // proxy data on instance
+  // 校验 data props methods上是否有同名字段
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
@@ -144,6 +152,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 代理
       proxy(vm, `_data`, key)
     }
   }

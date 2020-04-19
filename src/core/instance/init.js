@@ -1,5 +1,7 @@
 /* @flow */
 
+// vue对象定义的时候调用initMixin  vue对象创建的时候调用_init方法
+
 import config from '../config'
 import { initProxy } from './proxy'
 import { initState } from './state'
@@ -13,7 +15,9 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
+  // 在Vue构造函数中调用
   Vue.prototype._init = function (options?: Object) {
+    // vm => this
     const vm: Component = this
     // a uid
     vm._uid = uid++
@@ -28,6 +32,7 @@ export function initMixin (Vue: Class<Component>) {
 
     // a flag to avoid this being observed
     vm._isVue = true
+    // 合并参数对象options
     // merge options
     if (options && options._isComponent) {
       // optimize internal component instantiation
@@ -35,6 +40,7 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      // 实例化vue的参数统一绑定到this.$options上 合并options
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -48,14 +54,20 @@ export function initMixin (Vue: Class<Component>) {
       vm._renderProxy = vm
     }
     // expose real self
+    
     vm._self = vm
     initLifecycle(vm)
     initEvents(vm)
     initRender(vm)
+    // vm上的data prop拿不到
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+
+    // 初始化state (props/methods/data)
     initState(vm)
+
     initProvide(vm) // resolve provide after data/props
+    // vm上可以拿到
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -66,6 +78,7 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     if (vm.$options.el) {
+      // 挂载到el上
       vm.$mount(vm.$options.el)
     }
   }

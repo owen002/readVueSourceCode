@@ -87,9 +87,11 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  // 对children做normalize变成一维数组
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
+    // 把children里面是一个一位数组
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns
