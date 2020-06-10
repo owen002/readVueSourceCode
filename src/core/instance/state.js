@@ -152,7 +152,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
-      // 代理
+      // 将data上的数据代理到实例对象this上
       proxy(vm, `_data`, key)
     }
   }
@@ -204,6 +204,7 @@ function initComputed (vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    // 组件上的computed已经在vue对象上了 在子组件的构造函数上
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {

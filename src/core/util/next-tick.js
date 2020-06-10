@@ -1,6 +1,8 @@
 /* @flow */
 /* globals MutationObserver */
 
+//  Promise.resolve() ->  MutationObserver -> setImmediate -> setTimeout
+
 import { noop } from 'shared/util'
 import { handleError } from './error'
 import { isIE, isIOS, isNative } from './env'
@@ -48,6 +50,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     // microtask queue but the queue isn't being flushed, until the browser
     // needs to do some other work, e.g. handle a timer. Therefore we can
     // "force" the microtask queue to be flushed by adding an empty timer.
+    // ios
     if (isIOS) setTimeout(noop)
   }
   isUsingMicroTask = true
@@ -94,6 +97,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
         handleError(e, ctx, 'nextTick')
       }
     } else if (_resolve) {
+      // 走promise
       _resolve(ctx)
     }
   })
@@ -102,6 +106,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
     timerFunc()
   }
   // $flow-disable-line
+  // nextTick Promise实现 nextTick.then((rel,rej)=>{})
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve

@@ -295,6 +295,7 @@ export function createPatchFunction (backend) {
   }
 
   function isPatchable (vnode) {
+    // componentInstance 组件vnode --- 占位符vnode
     while (vnode.componentInstance) {
       vnode = vnode.componentInstance._vnode
     }
@@ -401,6 +402,7 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // vdom children diff算法 -- 
   function updateChildren (parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
     let oldStartIdx = 0
     let newStartIdx = 0
@@ -541,6 +543,7 @@ export function createPatchFunction (backend) {
 
     let i
     const data = vnode.data
+    // 组件vnode prepatch对子组件更新
     if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
       i(oldVnode, vnode)
     }
@@ -553,22 +556,28 @@ export function createPatchFunction (backend) {
     }
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
+        // 新旧节点都有children并且不相等 patch
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
       } else if (isDef(ch)) {
+        // 定义新节点 老节点不存在 添加新的 把老的text设置成空
         if (process.env.NODE_ENV !== 'production') {
           checkDuplicateKeys(ch)
         }
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
       } else if (isDef(oldCh)) {
+      // 新节点是空，只有老的 把老的删掉
         removeVnodes(elm, oldCh, 0, oldCh.length - 1)
       } else if (isDef(oldVnode.text)) {
+        // 老的是text 新节点没定义text 把老的text设置成空
         nodeOps.setTextContent(elm, '')
       }
     } else if (oldVnode.text !== vnode.text) {
+      // 文本节点
       nodeOps.setTextContent(elm, vnode.text)
     }
     if (isDef(data)) {
+      // 执行钩子函数 postpatch
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode)
     }
   }
@@ -713,6 +722,7 @@ export function createPatchFunction (backend) {
     } else {
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
+        // 新旧vnode相同的情况
         // patch existing root node
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
@@ -742,6 +752,11 @@ export function createPatchFunction (backend) {
           // create an empty node and replace it
           oldVnode = emptyNodeAt(oldVnode)
         }
+        // 新就vnode不同
+        // 3个步骤：
+        // 创建新节点
+        // 更新父占位符节点
+        // 删除旧节点
 
         // replacing existing element
         const oldElm = oldVnode.elm
@@ -761,8 +776,10 @@ export function createPatchFunction (backend) {
         // update parent placeholder node element, recursively
         if (isDef(vnode.parent)) {
           let ancestor = vnode.parent
+          // 当前节点是不是可挂载的
           const patchable = isPatchable(vnode)
           while (ancestor) {
+            // 更新占位符节点
             for (let i = 0; i < cbs.destroy.length; ++i) {
               cbs.destroy[i](ancestor)
             }
@@ -784,6 +801,7 @@ export function createPatchFunction (backend) {
             } else {
               registerRef(ancestor)
             }
+            // 一直往上找可挂载的节点
             ancestor = ancestor.parent
           }
         }

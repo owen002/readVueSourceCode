@@ -16,7 +16,9 @@ export default class Dep {
   subs: Array<Watcher>;
 
   constructor () {
+    // 自增id
     this.id = uid++
+    // 数据变化的订阅者
     this.subs = []
   }
 
@@ -52,6 +54,7 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
+// 当前正在计算的watcher
 Dep.target = null
 const targetStack = []
 

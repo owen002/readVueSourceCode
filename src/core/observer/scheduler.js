@@ -75,8 +75,10 @@ function flushSchedulerQueue () {
 
   // Sort queue before flush.
   // This ensures that:
+  // 组件更新是父->子
   // 1. Components are updated from parent to child. (because parent is always
   //    created before the child)
+  // user watcher --- 组件内的watcher
   // 2. A component's user watchers are run before its render watcher (because
   //    user watchers are created before the render watcher)
   // 3. If a component is destroyed during a parent component's watcher run,
@@ -92,8 +94,10 @@ function flushSchedulerQueue () {
     }
     id = watcher.id
     has[id] = null
+    // 会出发回调会再次执行
     watcher.run()
     // in dev build, check and stop circular updates.
+    // 无限循环判断
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
       if (circular[id] > MAX_UPDATE_COUNT) {
@@ -132,6 +136,7 @@ function callUpdatedHooks (queue) {
   while (i--) {
     const watcher = queue[i]
     const vm = watcher.vm
+    // 判断是否是渲染watcher vm._watcher === watcher
     if (vm._watcher === watcher && vm._isMounted && !vm._isDestroyed) {
       callHook(vm, 'updated')
     }
@@ -163,6 +168,7 @@ function callActivatedHooks (queue) {
  */
 export function queueWatcher (watcher: Watcher) {
   const id = watcher.id
+  // 同一次tick内 一个watcher只会执行一遍
   if (has[id] == null) {
     has[id] = true
     if (!flushing) {

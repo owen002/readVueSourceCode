@@ -35,7 +35,9 @@ export default class Watcher {
   dirty: boolean;
   active: boolean;
   deps: Array<Dep>;
+  // 新的
   newDeps: Array<Dep>;
+  // 旧的
   depIds: SimpleSet;
   newDepIds: SimpleSet;
   before: ?Function;
@@ -117,6 +119,8 @@ export default class Watcher {
         traverse(value)
       }
       popTarget()
+      // 在新的一轮render的时候发现之前订阅的watcher没有订阅的话 就删除之前的watcher 
+      // data:{a:1,b:2} template:"{{a}},{{b}}"=> "{{a}}"
       this.cleanupDeps()
     }
     return value
@@ -192,6 +196,7 @@ export default class Watcher {
         this.value = value
         if (this.user) {
           try {
+            // 例如user watcher中的回调handler:(newval,oldval)=>{}
             this.cb.call(this.vm, value, oldValue)
           } catch (e) {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)

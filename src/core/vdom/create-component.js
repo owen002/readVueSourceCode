@@ -126,6 +126,7 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件加载 -- 工厂函数
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -134,6 +135,7 @@ export function createComponent (
       // return a placeholder node for async component, which is rendered
       // as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
+      // 异步组件第一次渲染一个注释节点 占位
       return createAsyncPlaceholder(
         asyncFactory,
         data,

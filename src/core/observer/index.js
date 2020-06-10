@@ -24,6 +24,7 @@ const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
  */
 export let shouldObserve: boolean = true
 
+// observe开关
 export function toggleObserving (value: boolean) {
   shouldObserve = value
 }
@@ -43,6 +44,9 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 创建响应式的对象 暂存后面可以直接返回
+    // 只能用def 直接value.__ob__赋值的话在执行walk的时候会再次被observe
+    // def定义的属性不传enumerable参数不可以被枚举
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
@@ -50,8 +54,10 @@ export class Observer {
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      // 遍历数组每个元素，递归调用observe
       this.observeArray(value)
     } else {
+      // 遍历对象属性，调用defineReactive
       this.walk(value)
     }
   }
@@ -107,6 +113,11 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
+/**
+ * 
+ * @param {*} value 任意值value
+ * @param {*} asRootData  是否是根的数据
+ */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
@@ -115,6 +126,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
+    // 判断是否需要observe
     shouldObserve &&
     !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
@@ -132,6 +144,14 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 /**
  * Define a reactive property on an Object.
  */
+/**
+ * 
+ * @param {*} obj 对象
+ * @param {*} key key
+ * @param {*} val 初始值
+ * @param {*} customSetter 
+ * @param {*} shallow 
+ */
 export function defineReactive (
   obj: Object,
   key: string,
@@ -141,6 +161,8 @@ export function defineReactive (
 ) {
   const dep = new Dep()
 
+  // 返回对象属性的定义
+  // configurable false不定义 响应式对象
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
@@ -153,15 +175,20 @@ export function defineReactive (
     val = obj[key]
   }
 
+  // 递归调用observe 例如{a:{b:{c:{d:1}}}}  vue3升级成ES6 Proxy
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      // 依赖收集
       if (Dep.target) {
         dep.depend()
         if (childOb) {
+          // 为vue.$set -- 量身定制的依赖收集
+          // 响应式数据中对于对象新增删除属性以及数组下标访问和添加数据等的变化观测不到
+          // 通过vue.set以及数组的api可以解决，本质是内部手动做了依赖更新的派发
           childOb.dep.depend()
           if (Array.isArray(value)) {
             dependArray(value)
@@ -171,6 +198,7 @@ export function defineReactive (
       return value
     },
     set: function reactiveSetter (newVal) {
+      // 派发更新
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
       if (newVal === value || (newVal !== newVal && value !== value)) {
@@ -188,6 +216,7 @@ export function defineReactive (
         val = newVal
       }
       childOb = !shallow && observe(newVal)
+      // 更新
       dep.notify()
     }
   })
@@ -198,6 +227,7 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
+// Vue.$set
 export function set (target: Array<any> | Object, key: any, val: any): any {
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
@@ -213,6 +243,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     target[key] = val
     return val
   }
+  // 在defineReactive中定义的__ob__
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -221,11 +252,13 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  // 是普通的对象
   if (!ob) {
     target[key] = val
     return val
   }
   defineReactive(ob.value, key, val)
+  // 手动通知dep 通知watcher
   ob.dep.notify()
   return val
 }
